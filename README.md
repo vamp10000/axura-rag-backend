@@ -145,4 +145,4 @@ El sistema se conecta a la base de datos MongoDB existente de Axura para:
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. 
+Este proyecto está bajo la Licencia MIT. # Force redeploy - Mon Aug  4 17:36:35 CST 2025
