@@ -21,3 +21,4 @@ async def health():
 
 @app.get("/api/v1/test")
 async def test():
+    return {"message": "RAG API is working!"}
