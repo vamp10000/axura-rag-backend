@@ -28,3 +28,4 @@ async def root():
 async def health():
     return {"status": "healthy", "service": "axura-rag"}
 # Updated main.py
+# Updated main.py with working endpoints
