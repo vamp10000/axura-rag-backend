@@ -1,2 +1,6 @@
-# Updated for real RAG functionality
-# Updated for complete RAG functionality
+from fastapi import APIRouter
+router = APIRouter()
+
+@router.get("/test")
+async def test():
+    return {"message": "RAG API is working!"}
