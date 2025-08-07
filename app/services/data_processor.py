@@ -6,7 +6,7 @@ from app.config.settings import settings
 class DataProcessorService:
     def __init__(self):
         self.client = AsyncIOMotorClient(settings.mongodb_uri)
-        self.db = self.client[settings.mongodb_db_name]
+        self.db = self.client[settings.mongodb_database]
 
     async def get_inventory_data(self, company_id: str) -> Dict[str, Any]:
         """Get inventory data for a company"""

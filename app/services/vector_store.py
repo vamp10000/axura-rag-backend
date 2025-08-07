@@ -6,7 +6,7 @@ from app.config.settings import settings
 
 class VectorStoreService:
     def __init__(self):
-        self.persist_directory = settings.chroma_persist_directory
+        self.persist_directory = settings.chromadb_persist_directory
         self.client = chromadb.PersistentClient(path=self.persist_directory)
         self.collections = {}
 
