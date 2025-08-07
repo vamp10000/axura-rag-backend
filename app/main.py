@@ -79,12 +79,13 @@ async def ask_question(request: AskRequest):
             company_data = real_data['statistics']
             products = real_data.get('products', [])
             raw_materials = real_data.get('raw_materials', [])
+            company_name = real_data.get('company_name', company_id)
             
             # Generate response based on real data
             lower_question = question.lower()
             
             if "producto" in lower_question or "productos" in lower_question:
-                answer = f"Basándome en los datos reales de tu empresa {company_id}:\n\n"
+                answer = f"Basándome en los datos reales de tu empresa {company_name}:\n\n"
                 answer += "📦 **Información de Productos:**\n"
                 answer += f"- Total de productos: {company_data['total_products']}\n"
                 answer += f"- Productos con bajo stock: {company_data['low_stock_items']}\n"
@@ -99,14 +100,14 @@ async def ask_question(request: AskRequest):
                 
                 sources = [
                     {
-                        "content": f"Datos reales de productos para empresa {company_id}",
+                        "content": f"Datos reales de productos para empresa {company_name}",
                         "metadata": {"type": "real_data", "company_id": company_id},
                         "similarity": 0.95
                     }
                 ]
                 
             elif "materia" in lower_question or "materias" in lower_question:
-                answer = f"Basándome en los datos reales de tu empresa {company_id}:\n\n"
+                answer = f"Basándome en los datos reales de tu empresa {company_name}:\n\n"
                 answer += "🏭 **Información de Materias Primas:**\n"
                 answer += f"- Total de materias primas: {company_data['total_raw_materials']}\n\n"
                 
@@ -119,14 +120,14 @@ async def ask_question(request: AskRequest):
                 
                 sources = [
                     {
-                        "content": f"Datos reales de materias primas para empresa {company_id}",
+                        "content": f"Datos reales de materias primas para empresa {company_name}",
                         "metadata": {"type": "real_data", "company_id": company_id},
                         "similarity": 0.92
                     }
                 ]
                 
             else:
-                answer = f"Basándome en los datos reales de tu empresa {company_id}:\n\n"
+                answer = f"Basándome en los datos reales de tu empresa {company_name}:\n\n"
                 answer += "📊 **Resumen General:**\n"
                 answer += f"- Productos: {company_data['total_products']}\n"
                 answer += f"- Materias primas: {company_data['total_raw_materials']}\n"
@@ -136,7 +137,7 @@ async def ask_question(request: AskRequest):
                 
                 sources = [
                     {
-                        "content": f"Resumen real de inventario para empresa {company_id}",
+                        "content": f"Resumen real de inventario para empresa {company_name}",
                         "metadata": {"type": "real_data", "company_id": company_id},
                         "similarity": 0.85
                     }
@@ -209,7 +210,7 @@ async def ask_question(request: AskRequest):
                         "similarity": 0.85
                     }
                 ]
-        
+            
         print(f"✅ RAG: Successfully processed question, found {len(sources)} sources")
         
         return AskResponse(
