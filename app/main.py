@@ -3,7 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 
+from app.services.embeddings import EmbeddingService
+from app.services.vector_store import VectorStoreService
+from app.services.data_processor import DataProcessorService
+
 app = FastAPI(title="Axura RAG System", version="1.0.0")
+
+# Initialize services
+embedding_service = EmbeddingService()
+vector_store_service = VectorStoreService()
+data_processor_service = DataProcessorService()
 
 app.add_middleware(
     CORSMiddleware,
