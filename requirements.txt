@@ -1,7 +1,7 @@
 # Axura RAG System - Requirements for Python 3.12
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-openai==1.3.7
+openai>=1.6.1
 numpy>=1.26.0
 chromadb==0.4.18
 langchain==0.0.350
@@ -9,3 +9,4 @@ pymongo==4.6.0
 motor==3.3.2
 python-dotenv==1.0.0
 pydantic-settings>=2.0.0
+httpx>=0.25.0
