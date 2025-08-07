@@ -57,76 +57,158 @@ async def ask_question(request: AskRequest):
         
         print(f"🔍 RAG: Processing question for company {company_id}: {question}")
         
-        # Simulate processing time
-        await asyncio.sleep(0.5)
+        # Try to get real data from business backend
+        real_data = None
+        try:
+            import httpx
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"https://business-backend-production-52b4.up.railway.app/api/companies/public/inventory/{company_id}",
+                    timeout=10.0
+                )
+                if response.status_code == 200:
+                    real_data = response.json()
+                    print(f"✅ RAG: Got real data for company {company_id}")
+                else:
+                    print(f"⚠️ RAG: Could not get real data for company {company_id}, using mock data")
+        except Exception as e:
+            print(f"⚠️ RAG: Error getting real data: {e}, using mock data")
         
-        # Mock company data based on company_id
-        mock_company_data = {
-            "total_products": 25,
-            "total_raw_materials": 15,
-            "low_stock_items": 3,
-            "total_inventory_value": 150000.00
-        }
-        
-        # Generate mock response based on question
-        lower_question = question.lower()
-        
-        if "producto" in lower_question or "productos" in lower_question:
-            answer = f"Basándome en los datos de tu empresa {company_id}:\n\n"
-            answer += "📦 **Información de Productos:**\n"
-            answer += f"- Total de productos: {mock_company_data['total_products']}\n"
-            answer += f"- Productos con bajo stock: {mock_company_data['low_stock_items']}\n"
-            answer += f"- Valor total del inventario: ${mock_company_data['total_inventory_value']:,.2f}\n\n"
-            answer += "Los productos más populares incluyen:\n"
-            answer += "- Producto A: 50 unidades en stock\n"
-            answer += "- Producto B: 30 unidades en stock\n"
-            answer += "- Producto C: 15 unidades en stock"
+        # Use real data if available, otherwise use mock data
+        if real_data and real_data.get('success'):
+            company_data = real_data['statistics']
+            products = real_data.get('products', [])
+            raw_materials = real_data.get('raw_materials', [])
             
-            sources = [
-                {
-                    "content": "Producto A: 50 unidades en stock - Categoría: Electrónicos",
-                    "metadata": {"type": "product", "name": "Producto A", "stock": 50},
-                    "similarity": 0.95
-                },
-                {
-                    "content": "Producto B: 30 unidades en stock - Categoría: Herramientas",
-                    "metadata": {"type": "product", "name": "Producto B", "stock": 30},
-                    "similarity": 0.88
-                }
-            ]
-        elif "materia" in lower_question or "materias" in lower_question:
-            answer = f"Basándome en los datos de tu empresa {company_id}:\n\n"
-            answer += "🏭 **Información de Materias Primas:**\n"
-            answer += f"- Total de materias primas: {mock_company_data['total_raw_materials']}\n"
-            answer += "- Proveedores principales: 8\n\n"
-            answer += "Materias primas más utilizadas:\n"
-            answer += "- Material X: 200 kg en stock\n"
-            answer += "- Material Y: 150 kg en stock\n"
-            answer += "- Material Z: 100 kg en stock"
+            # Generate response based on real data
+            lower_question = question.lower()
             
-            sources = [
-                {
-                    "content": "Material X: 200 kg en stock - Proveedor: ABC Supplies",
-                    "metadata": {"type": "raw_material", "name": "Material X", "stock": 200},
-                    "similarity": 0.92
-                }
-            ]
+            if "producto" in lower_question or "productos" in lower_question:
+                answer = f"Basándome en los datos reales de tu empresa {company_id}:\n\n"
+                answer += "📦 **Información de Productos:**\n"
+                answer += f"- Total de productos: {company_data['total_products']}\n"
+                answer += f"- Productos con bajo stock: {company_data['low_stock_items']}\n"
+                answer += f"- Valor total del inventario: ${company_data['total_inventory_value']:,.2f}\n\n"
+                
+                if products:
+                    answer += "**Productos principales:**\n"
+                    for product in products[:5]:  # Show top 5 products
+                        answer += f"- {product['name']}: {product['stock']} unidades en stock\n"
+                else:
+                    answer += "No hay productos registrados aún."
+                
+                sources = [
+                    {
+                        "content": f"Datos reales de productos para empresa {company_id}",
+                        "metadata": {"type": "real_data", "company_id": company_id},
+                        "similarity": 0.95
+                    }
+                ]
+                
+            elif "materia" in lower_question or "materias" in lower_question:
+                answer = f"Basándome en los datos reales de tu empresa {company_id}:\n\n"
+                answer += "🏭 **Información de Materias Primas:**\n"
+                answer += f"- Total de materias primas: {company_data['total_raw_materials']}\n\n"
+                
+                if raw_materials:
+                    answer += "**Materias primas principales:**\n"
+                    for material in raw_materials[:5]:  # Show top 5 materials
+                        answer += f"- {material['name']}: {material['stock']} unidades en stock\n"
+                else:
+                    answer += "No hay materias primas registradas aún."
+                
+                sources = [
+                    {
+                        "content": f"Datos reales de materias primas para empresa {company_id}",
+                        "metadata": {"type": "real_data", "company_id": company_id},
+                        "similarity": 0.92
+                    }
+                ]
+                
+            else:
+                answer = f"Basándome en los datos reales de tu empresa {company_id}:\n\n"
+                answer += "📊 **Resumen General:**\n"
+                answer += f"- Productos: {company_data['total_products']}\n"
+                answer += f"- Materias primas: {company_data['total_raw_materials']}\n"
+                answer += f"- Valor total del inventario: ${company_data['total_inventory_value']:,.2f}\n"
+                answer += f"- Productos con bajo stock: {company_data['low_stock_items']}\n\n"
+                answer += "¿En qué aspecto específico te gustaría que profundice?"
+                
+                sources = [
+                    {
+                        "content": f"Resumen real de inventario para empresa {company_id}",
+                        "metadata": {"type": "real_data", "company_id": company_id},
+                        "similarity": 0.85
+                    }
+                ]
         else:
-            answer = f"Basándome en los datos de tu empresa {company_id}:\n\n"
-            answer += "📊 **Resumen General:**\n"
-            answer += f"- Productos: {mock_company_data['total_products']}\n"
-            answer += f"- Materias primas: {mock_company_data['total_raw_materials']}\n"
-            answer += f"- Valor total del inventario: ${mock_company_data['total_inventory_value']:,.2f}\n"
-            answer += f"- Productos con bajo stock: {mock_company_data['low_stock_items']}\n\n"
-            answer += "¿En qué aspecto específico te gustaría que profundice?"
+            # Use mock data if real data is not available
+            mock_company_data = {
+                "total_products": 25,
+                "total_raw_materials": 15,
+                "low_stock_items": 3,
+                "total_inventory_value": 150000.00
+            }
             
-            sources = [
-                {
-                    "content": f"Resumen de inventario para empresa {company_id}",
-                    "metadata": {"type": "summary", "company_id": company_id},
-                    "similarity": 0.85
-                }
-            ]
+            # Generate mock response based on question
+            lower_question = question.lower()
+            
+            if "producto" in lower_question or "productos" in lower_question:
+                answer = f"Basándome en los datos de tu empresa {company_id}:\n\n"
+                answer += "📦 **Información de Productos:**\n"
+                answer += f"- Total de productos: {mock_company_data['total_products']}\n"
+                answer += f"- Productos con bajo stock: {mock_company_data['low_stock_items']}\n"
+                answer += f"- Valor total del inventario: ${mock_company_data['total_inventory_value']:,.2f}\n\n"
+                answer += "Los productos más populares incluyen:\n"
+                answer += "- Producto A: 50 unidades en stock\n"
+                answer += "- Producto B: 30 unidades en stock\n"
+                answer += "- Producto C: 15 unidades en stock"
+                
+                sources = [
+                    {
+                        "content": "Producto A: 50 unidades en stock - Categoría: Electrónicos",
+                        "metadata": {"type": "product", "name": "Producto A", "stock": 50},
+                        "similarity": 0.95
+                    },
+                    {
+                        "content": "Producto B: 30 unidades en stock - Categoría: Herramientas",
+                        "metadata": {"type": "product", "name": "Producto B", "stock": 30},
+                        "similarity": 0.88
+                    }
+                ]
+            elif "materia" in lower_question or "materias" in lower_question:
+                answer = f"Basándome en los datos de tu empresa {company_id}:\n\n"
+                answer += "🏭 **Información de Materias Primas:**\n"
+                answer += f"- Total de materias primas: {mock_company_data['total_raw_materials']}\n"
+                answer += "- Proveedores principales: 8\n\n"
+                answer += "Materias primas más utilizadas:\n"
+                answer += "- Material X: 200 kg en stock\n"
+                answer += "- Material Y: 150 kg en stock\n"
+                answer += "- Material Z: 100 kg en stock"
+                
+                sources = [
+                    {
+                        "content": "Material X: 200 kg en stock - Proveedor: ABC Supplies",
+                        "metadata": {"type": "raw_material", "name": "Material X", "stock": 200},
+                        "similarity": 0.92
+                    }
+                ]
+            else:
+                answer = f"Basándome en los datos de tu empresa {company_id}:\n\n"
+                answer += "📊 **Resumen General:**\n"
+                answer += f"- Productos: {mock_company_data['total_products']}\n"
+                answer += f"- Materias primas: {mock_company_data['total_raw_materials']}\n"
+                answer += f"- Valor total del inventario: ${mock_company_data['total_inventory_value']:,.2f}\n"
+                answer += f"- Productos con bajo stock: {mock_company_data['low_stock_items']}\n\n"
+                answer += "¿En qué aspecto específico te gustaría que profundice?"
+                
+                sources = [
+                    {
+                        "content": f"Resumen de inventario para empresa {company_id}",
+                        "metadata": {"type": "summary", "company_id": company_id},
+                        "similarity": 0.85
+                    }
+                ]
         
         print(f"✅ RAG: Successfully processed question, found {len(sources)} sources")
         
@@ -136,9 +218,9 @@ async def ask_question(request: AskRequest):
             metadata={
                 "total_sources": len(sources),
                 "company_id": company_id,
-                "company_data": mock_company_data,
+                "company_data": real_data['statistics'] if real_data and real_data.get('success') else mock_company_data,
                 "processing_time": 0.5,
-                "note": "Using mock data while MongoDB connection is being configured"
+                "data_source": "real" if real_data and real_data.get('success') else "mock"
             }
         )
         
