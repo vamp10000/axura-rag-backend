@@ -61,25 +61,25 @@ async def ask_question(request: AskRequest):
         
         # Search products
         products_results = await vector_store_service.search_similar(
-            "products", embedding, company_id, limit=3
+            "products", embedding, n_results=3
         )
         all_results.extend(products_results)
         
         # Search raw materials
         raw_materials_results = await vector_store_service.search_similar(
-            "raw_materials", embedding, company_id, limit=3
+            "raw_materials", embedding, n_results=3
         )
         all_results.extend(raw_materials_results)
         
         # Search inventory movements
         movements_results = await vector_store_service.search_similar(
-            "inventory_movements", embedding, company_id, limit=3
+            "inventory_movements", embedding, n_results=3
         )
         all_results.extend(movements_results)
         
         # Search company info
         company_results = await vector_store_service.search_similar(
-            "company_info", embedding, company_id, limit=2
+            "company_info", embedding, n_results=2
         )
         all_results.extend(company_results)
         
