@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 from app.services.embeddings import EmbeddingService
 from app.services.vector_store import VectorStoreService
 from app.services.data_processor import DataProcessorService
+from app.config import settings
 
 app = FastAPI(title="Axura RAG System", version="1.0.0")
 
@@ -216,6 +217,55 @@ async def rag_health():
         },
         "version": "1.0.0"
     }
+
+@app.get("/api/v1/test-companies")
+async def test_companies():
+    """
+    Endpoint para probar conexión y listar empresas disponibles
+    """
+    try:
+        # Test MongoDB connection
+        connection_status = "unknown"
+        companies = []
+        
+        try:
+            # Try to connect to MongoDB
+            await data_processor_service.client.admin.command('ping')
+            connection_status = "connected"
+            
+            # Try to get companies from users collection
+            users_collection = data_processor_service.db.users
+            company_users = await users_collection.find({"role": "empresajefe"}).to_list(length=10)
+            
+            for user in company_users:
+                companies.append({
+                    "company_id": user.get("company"),
+                    "company_name": user.get("companyName", "Unknown"),
+                    "admin_email": user.get("email", "Unknown"),
+                    "created_at": user.get("createdAt", "Unknown")
+                })
+                
+        except Exception as e:
+            connection_status = f"error: {str(e)}"
+        
+        return {
+            "mongodb_connection": connection_status,
+            "mongodb_uri": settings.mongodb_uri.replace("://", "://***:***@") if settings.mongodb_uri else "not_set",
+            "mongodb_database": settings.mongodb_database,
+            "companies_found": len(companies),
+            "companies": companies,
+            "environment": {
+                "openai_api_key_set": bool(settings.openai_api_key),
+                "chromadb_persist_directory": settings.chromadb_persist_directory
+            }
+        }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "mongodb_uri": settings.mongodb_uri.replace("://", "://***:***@") if settings.mongodb_uri else "not_set",
+            "mongodb_database": settings.mongodb_database
+        }
 
 if __name__ == "__main__":
     import uvicorn
