@@ -457,7 +457,12 @@ async def query_invoices(request: dict):
                         'total': data.get('total', 0),
                         'iva': data.get('iva_trasladado', [{}])[0].get('importe', 0) if data.get('iva_trasladado') else 0,
                         'fecha': data.get('fecha', 'N/A'),
-                        'uuid': data.get('uuid', 'N/A')
+                        'uuid': data.get('uuid', 'N/A'),
+                        'folio': data.get('folio', 'N/A'),
+                        'serie': data.get('serie', 'N/A'),
+                        'subtotal': data.get('subtotal', 0),
+                        'moneda': data.get('moneda', 'N/A'),
+                        'uso_cfdi': data.get('uso_cfdi', 'N/A')
                     }
                     invoice_summary.append(summary)
             
@@ -478,6 +483,21 @@ INSTRUCCIONES:
 5. Si no hay datos suficientes, indícalo claramente
 6. Proporciona insights útiles basados en los datos
 7. NO menciones fuentes, solo da la respuesta directa
+8. **IMPORTANTE**: Para preguntas sobre facturas, usa formato de lista con todos los detalles:
+   - **Total de facturas**: X
+   - **Factura 1**:
+     - **Emisor**: Nombre del emisor
+     - **Receptor**: Nombre del receptor  
+     - **Total**: $X,XXX.XX
+     - **Subtotal**: $X,XXX.XX
+     - **IVA**: $XXX.XX
+     - **Fecha**: DD de mes de AAAA
+     - **UUID**: XXXX-XXXX-XXXX-XXXX
+     - **Folio**: XXXXXX
+     - **Serie**: XXXX (si aplica)
+     - **Moneda**: MXN
+     - **Uso CFDI**: Descripción del uso
+   - **Factura 2**: (si hay más)
 
 RESPUESTA:
 """
