@@ -399,12 +399,29 @@ async def test_invoice_rag(request: dict):
             "error": str(e)
         }
 
-@app.post("/api/invoice-rag/query", response_model=InvoiceQueryResponse)
-async def query_invoices(request: InvoiceQueryRequest):
+@app.post("/api/invoice-rag/query")
+async def query_invoices(request: dict):
     try:
-        question = request.question
-        company_id = request.company_id
-        invoice_data = request.invoice_data
+        print(f"🔍 [Invoice RAG] Raw request received: {request}")
+        print(f"🔍 [Invoice RAG] Request type: {type(request)}")
+        print(f"🔍 [Invoice RAG] Request keys: {list(request.keys()) if isinstance(request, dict) else 'not dict'}")
+        
+        # Validate manually
+        if not isinstance(request, dict):
+            raise HTTPException(status_code=422, detail="Request must be a dictionary")
+        
+        if 'question' not in request:
+            raise HTTPException(status_code=422, detail="Missing 'question' field")
+        
+        if 'company_id' not in request:
+            raise HTTPException(status_code=422, detail="Missing 'company_id' field")
+        
+        if 'invoice_data' not in request:
+            raise HTTPException(status_code=422, detail="Missing 'invoice_data' field")
+        
+        question = request['question']
+        company_id = request['company_id']
+        invoice_data = request['invoice_data']
         
         print(f"🔍 [Invoice RAG] Processing question for company {company_id}: {question}")
         print(f"📊 [Invoice RAG] Analyzing {len(invoice_data)} invoices")
