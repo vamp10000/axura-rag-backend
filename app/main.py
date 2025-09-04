@@ -452,8 +452,8 @@ async def query_invoices(request: dict):
                 if invoice.get('invoiceData'):
                     data = invoice['invoiceData']
                     summary = {
-                        'emisor': data.get('emisor', {}).get('nombre', 'N/A'),
-                        'receptor': data.get('receptor', {}).get('nombre', 'N/A'),
+                        'emisor': data.get('emisor_nombre', 'N/A'),
+                        'receptor': data.get('receptor_nombre', 'N/A'),
                         'total': data.get('total', 0),
                         'iva': data.get('iva_trasladado', [{}])[0].get('importe', 0) if data.get('iva_trasladado') else 0,
                         'fecha': data.get('fecha', 'N/A'),
@@ -474,8 +474,10 @@ INSTRUCCIONES:
 1. Analiza los datos de facturas proporcionados
 2. Responde la pregunta de manera clara y precisa
 3. Incluye números específicos cuando sea relevante
-4. Si no hay datos suficientes, indícalo claramente
-5. Proporciona insights útiles basados en los datos
+4. Usa los nombres reales de emisor y receptor (no "N/A")
+5. Si no hay datos suficientes, indícalo claramente
+6. Proporciona insights útiles basados en los datos
+7. NO menciones fuentes, solo da la respuesta directa
 
 RESPUESTA:
 """
@@ -493,18 +495,8 @@ RESPUESTA:
             
             answer = response.choices[0].message.content
             
-            # Find relevant sources
+            # No sources needed for invoice queries
             sources = []
-            for invoice in actual_invoices[:5]:  # Top 5 most relevant
-                if invoice.get('invoiceData'):
-                    data = invoice['invoiceData']
-                    sources.append({
-                        'invoice_id': invoice.get('_id', 'N/A'),
-                        'emisor': data.get('emisor', {}).get('nombre', 'N/A'),
-                        'total': data.get('total', 0),
-                        'fecha': data.get('fecha', 'N/A'),
-                        'relevance_score': 0.9  # High relevance for now
-                    })
             
             metadata = {
                 'total_invoices_analyzed': len(actual_invoices),
