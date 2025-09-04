@@ -382,6 +382,23 @@ class InvoiceQueryResponse(BaseModel):
     sources: List[Dict[str, Any]]
     metadata: Dict[str, Any]
 
+# Test endpoint to verify RAG backend is working
+@app.post("/api/invoice-rag/test")
+async def test_invoice_rag(request: dict):
+    try:
+        print(f"🔍 [Invoice RAG Test] Received request: {request}")
+        return {
+            "success": True,
+            "message": "RAG backend is working",
+            "received_data": request
+        }
+    except Exception as e:
+        print(f"❌ [Invoice RAG Test] Error: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @app.post("/api/invoice-rag/query", response_model=InvoiceQueryResponse)
 async def query_invoices(request: InvoiceQueryRequest):
     try:
