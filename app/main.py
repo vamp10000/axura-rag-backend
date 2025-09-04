@@ -391,6 +391,8 @@ async def query_invoices(request: InvoiceQueryRequest):
         
         print(f"🔍 [Invoice RAG] Processing question for company {company_id}: {question}")
         print(f"📊 [Invoice RAG] Analyzing {len(invoice_data)} invoices")
+        print(f"🔍 [Invoice RAG] Invoice data type: {type(invoice_data)}")
+        print(f"🔍 [Invoice RAG] First invoice sample: {invoice_data[0] if invoice_data else 'No data'}")
         
         # Process invoice data with AI
         try:
@@ -482,6 +484,9 @@ RESPUESTA:
         
     except Exception as e:
         print(f"❌ [Invoice RAG] General error: {e}")
+        print(f"❌ [Invoice RAG] Error type: {type(e)}")
+        import traceback
+        print(f"❌ [Invoice RAG] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error processing invoice query: {str(e)}")
 
 if __name__ == "__main__":
