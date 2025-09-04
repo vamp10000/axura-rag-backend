@@ -424,9 +424,17 @@ async def query_invoices(request: dict):
         invoice_data = request['invoice_data']
         
         print(f"🔍 [Invoice RAG] Processing question for company {company_id}: {question}")
-        print(f"📊 [Invoice RAG] Analyzing {len(invoice_data)} invoices")
         print(f"🔍 [Invoice RAG] Invoice data type: {type(invoice_data)}")
-        print(f"🔍 [Invoice RAG] First invoice sample: {invoice_data[0] if invoice_data else 'No data'}")
+        print(f"🔍 [Invoice RAG] Invoice data keys: {list(invoice_data.keys()) if isinstance(invoice_data, dict) else 'not dict'}")
+        
+        # Extract the actual invoice list from the response
+        if isinstance(invoice_data, dict) and 'data' in invoice_data:
+            actual_invoices = invoice_data['data']
+            print(f"📊 [Invoice RAG] Analyzing {len(actual_invoices)} invoices")
+            print(f"🔍 [Invoice RAG] First invoice sample: {actual_invoices[0] if actual_invoices else 'No data'}")
+        else:
+            print(f"❌ [Invoice RAG] Invalid invoice data structure: {invoice_data}")
+            raise HTTPException(status_code=422, detail="Invalid invoice data structure")
         
         # Process invoice data with AI
         try:
@@ -440,7 +448,7 @@ async def query_invoices(request: dict):
             
             # Prepare invoice data for analysis
             invoice_summary = []
-            for invoice in invoice_data[:20]:  # Limit to first 20 invoices for context
+            for invoice in actual_invoices[:20]:  # Limit to first 20 invoices for context
                 if invoice.get('invoiceData'):
                     data = invoice['invoiceData']
                     summary = {
@@ -487,7 +495,7 @@ RESPUESTA:
             
             # Find relevant sources
             sources = []
-            for invoice in invoice_data[:5]:  # Top 5 most relevant
+            for invoice in actual_invoices[:5]:  # Top 5 most relevant
                 if invoice.get('invoiceData'):
                     data = invoice['invoiceData']
                     sources.append({
@@ -499,7 +507,7 @@ RESPUESTA:
                     })
             
             metadata = {
-                'total_invoices_analyzed': len(invoice_data),
+                'total_invoices_analyzed': len(actual_invoices),
                 'processing_time': 0.5,
                 'confidence_score': 0.85
             }
